@@ -1,0 +1,21 @@
+body,
+html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+canvas {
+    background-color: rgb(100, 100, 100);
+    display: block;
+    width: 100vw;
+    height: 100vh;
+
+    filter: blur(0px);
+    transition: filter 0.2s ease-in-out;
+}
+
+.blur-mode {
+    filter: blur(20px);
+    pointer-events: none;
+}
