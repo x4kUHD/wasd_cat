@@ -6,7 +6,7 @@ html {
 }
 
 canvas {
-    background-color: rgb(48, 48, 48);
+    background-color: #A1A353;
     display: block;
     width: 100vw;
     height: 100vh;

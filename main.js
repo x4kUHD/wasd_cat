@@ -6,13 +6,26 @@ const ctx = canvas.getContext("2d")
 const playerSprite = new Image();
 playerSprite.src = "tempPlayer.png"
 
-// config and limits
+// config, limits, states, constants etc
 const CONFIG = {
     TILE_SIZE: 16,
     MAP_WIDTH: 32,
     MAP_HEIGHT: 32,
-    MOVE_SPEED: 20
+    MOVE_SPEED: 4,
+    SCALE: 4
 }
+
+// user 
+const userState = {
+    x: 0,
+    y: 0
+}
+
+// TODO:
+// background layer
+const L1_TILES = ["GRASS", "WATER"]
+// objects
+const L2_TILES = ["TREE", "BUSH", "WALL"]
 
 
 // global variables
@@ -35,7 +48,7 @@ function resizeHandle() {
     resizeTimer = setTimeout(() => {
         canvas.width = window.innerWidth
         canvas.height = window.innerHeight
-        ctx.scale(2, 2)
+        ctx.scale(CONFIG.SCALE, CONFIG.SCALE)
 
         // re-disbale smoothing since change width height resets context
         ctx.imageSmoothingEnabled = false
@@ -47,11 +60,6 @@ function resizeHandle() {
     }, 200)
 }
 window.addEventListener("resize", resizeHandle)
-
-const userState = {
-    x: 0,
-    y: 0
-}
 
 function update(dt) {
     // update player position here since it runs at a steady 60fps
@@ -139,11 +147,9 @@ function keydownHandle(e) {
     return
 }
 
-
 function keyupHandle(e) {
     keys[e.key] = false
 }
-
 
 // core loop (state -> update -> render)
 function gameLoop(timestamp) {
