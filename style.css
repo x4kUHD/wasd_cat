@@ -6,16 +6,16 @@ html {
 }
 
 canvas {
-    background-color: rgb(100, 100, 100);
+    background-color: rgb(48, 48, 48);
     display: block;
     width: 100vw;
     height: 100vh;
 
     filter: blur(0px);
-    transition: filter 0.2s ease-in-out;
+    transition: filter 0.5s ease-in-out;
 }
 
 .blur-mode {
-    filter: blur(20px);
+    filter: blur(60px);
     pointer-events: none;
 }
