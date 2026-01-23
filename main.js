@@ -4,9 +4,9 @@ const ctx = canvas.getContext("2d")
 
 // player sprite
 const playerSprite = new Image();
-playerSprite.src = "tempPlayer.png"
+playerSprite.src = "sprites/tempPlayer.png"
 
-// config, limits, states, constants etc
+// config, states, global vars
 const CONFIG = {
     TILE_SIZE: 16,
     MAP_WIDTH: 32,
@@ -15,23 +15,60 @@ const CONFIG = {
     SCALE: 4
 }
 
-// user 
+// USER STATE
 const userState = {
     x: 0,
     y: 0
 }
 
-// TODO:
-// background layer
-const L1_TILES = ["GRASS", "WATER"]
-// objects
-const L2_TILES = ["TREE", "BUSH", "WALL"]
+// KEY STATES
+const keys = {
+    w: false,
+    a: false,
+    s: false,
+    d: false,
+}
+const validKeys = ["w", "a", "s", "d", "escape"]
 
-
-// global variables
+// RENDERING VARIABLES
 let isResizing = false
 let resizeTimer = 0
 let lastMoveTime = 0;
+
+// MAP 
+// dictionary
+const TILE_TYPE = {
+    "GRASS": 0,
+    "WATER": 1,
+    "BUSH": 2,
+    "TREE": 3,
+    "WALL": 4
+}
+
+const grassSprite = new Image()
+const waterSprite = new Image()
+grassSprite.src = "sprites/grass.png"
+waterSprite.src = "sprites/water.png"
+
+// layer 1 array 
+const mapL1 = Array.from({ length: CONFIG.MAP_HEIGHT }, (_, y) =>
+    Array.from({ length: CONFIG.MAP_WIDTH }, (_, x) => {
+        // The Rule: If we are within 3 tiles of any edge, return WATER
+        if (x < 3 || x >= CONFIG.MAP_WIDTH - 3 || y < 3 || y >= CONFIG.MAP_HEIGHT - 3) {
+            return TILE_TYPE.WATER;
+        }
+        // Otherwise, return GRASS
+        return TILE_TYPE.GRASS;
+    })
+);
+
+// CAMERA
+const camera = {
+    x: 0,
+    y: 0
+};
+
+
 
 // handle window resize
 function resizeHandle() {
@@ -76,69 +113,100 @@ function update(dt) {
 
     // bounds
     if (newX < 0) newX = 0
-    if (newX > CONFIG.MAP_WIDTH - CONFIG.TILE_SIZE) newX = CONFIG.MAP_WIDTH - CONFIG.TILE_SIZE
+    if (newX > CONFIG.MAP_WIDTH - 1) newX = CONFIG.MAP_WIDTH - 1
     if (newY < 0) newY = 0
-    if (newY > CONFIG.MAP_HEIGHT - CONFIG.TILE_SIZE) newY = CONFIG.MAP_HEIGHT - CONFIG.TILE_SIZE
+    if (newY > CONFIG.MAP_HEIGHT - 1) newY = CONFIG.MAP_HEIGHT - 1
 
     userState.x = newX
     userState.y = newY
-}
-function inBounds(key) {
-    // get potential position
-    // if potential position out of bounds, return false
-    // else return true
 
-    let newX = userState.x
-    let newY = userState.y
+    // camera
+    // find center of current frame
+    const centerX = (canvas.width / CONFIG.SCALE) / 2
+    const centerY = (canvas.height / CONFIG.SCALE) / 2
 
-    if (key === "w") newY -= 1
-    if (key === "s") newY += 1
-    if (key === "a") newX -= 1
-    if (key === "d") newX += 1
+    // set camera x/y
+    camera.x = (userState.x * CONFIG.TILE_SIZE) - centerX + (CONFIG.TILE_SIZE / 2);
+    camera.y = (userState.y * CONFIG.TILE_SIZE) - centerY + (CONFIG.TILE_SIZE / 2);
 
-    if (newX < 0 || newX >= CONFIG.MAP_WIDTH || newY < 0 || newY >= CONFIG.MAP_HEIGHT) {
-        return false
-    }
+    // A. Stop the camera from going past the Top-Left (0, 0)
+    if (camera.x < 0) camera.x = 0;
+    if (camera.y < 0) camera.y = 0;
 
-    return true
+    // B. Stop the camera from going past the Bottom-Right edge
+    // Math: Total Map Size (in pixels) minus one screen-full of pixels
+    const mapPixelWidth = CONFIG.MAP_WIDTH * CONFIG.TILE_SIZE;
+    const mapPixelHeight = CONFIG.MAP_HEIGHT * CONFIG.TILE_SIZE;
+
+    const maxCameraX = mapPixelWidth - (canvas.width / CONFIG.SCALE);
+    const maxCameraY = mapPixelHeight - (canvas.height / CONFIG.SCALE);
+
+    if (camera.x > maxCameraX) camera.x = maxCameraX;
+    if (camera.y > maxCameraY) camera.y = maxCameraY;
+
 }
 
 function draw() {
     // clear previous frame's pixels
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
+    // draw map 
+    // sprite = null
+    // for each id in mapL1,
+    // if id === 0, sprite = grassSprite
+    // if id === 1, sprite = waterSprite
+    // ctx.drawImage(sprite)
+
+    for (let i = 0; i < mapL1.length; i++) {
+        for (let j = 0; j < mapL1[i].length; j++) {
+            let sprite = null
+            let id = mapL1[i][j]
+
+            if (id === TILE_TYPE.GRASS) sprite = grassSprite
+            if (id === TILE_TYPE.WATER) sprite = waterSprite
+
+            if (sprite) {
+                // Inside your map loop, wrap the X and Y in Math.floor:
+                ctx.drawImage(
+                    sprite,
+                    Math.floor((j * CONFIG.TILE_SIZE) - camera.x),
+                    Math.floor((i * CONFIG.TILE_SIZE) - camera.y),
+                    CONFIG.TILE_SIZE,
+                    CONFIG.TILE_SIZE
+                );
+            }
+        }
+    }
+
+    // draw player
     // ctx.drawImage(image, dx, dy, dWidth, dHeight)
     // dx (destination x) - horizontal coord where image starts
     // dy (destination y) - vertical coord where image starts
     ctx.drawImage(
         playerSprite,
-        userState.x * 16,
-        userState.y * 16,
-        16, 16
+        (userState.x * CONFIG.TILE_SIZE) - camera.x,
+        (userState.y * CONFIG.TILE_SIZE) - camera.y,
+        CONFIG.TILE_SIZE,
+        CONFIG.TILE_SIZE
     );
-}
 
-// key registry (state)
-const keys = {
-    w: false,
-    a: false,
-    s: false,
-    d: false,
 }
-
-const validKeys = ["w", "a", "s", "d", "Escape"]
 
 // key logic (movement and pause)
 window.addEventListener("keydown", keydownHandle)
 window.addEventListener("keyup", keyupHandle)
+window.addEventListener("blur", () => {
+    // reset all keys to false when the player leaves the window
+    keys.w = false; keys.a = false; keys.s = false; keys.d = false;
+});
 
 function keydownHandle(e) {
     // check if e.key is valid key. we want to handle wasd and esc
-    const key = e.key
+    const key = e.key.toLowerCase()
     if (!validKeys.includes(key)) return
-    if (key === "Escape") {
+    if (key === "escape") {
         // todo: pause logic
-        console.log("Escape")
+        console.log("escape")
         return
     }
 
@@ -148,7 +216,7 @@ function keydownHandle(e) {
 }
 
 function keyupHandle(e) {
-    keys[e.key] = false
+    keys[e.key.toLowerCase()] = false
 }
 
 // core loop (state -> update -> render)
@@ -157,7 +225,8 @@ function gameLoop(timestamp) {
     if (!isResizing) {
         // calculate dt in seconds and render 
         // dt is the exact amt of time passed btwn previous and curr frame
-        const dt = (timestamp - lastMoveTime) / 1000
+        let dt = (timestamp - lastMoveTime) / 1000
+        if (dt > 0.1) dt = 0.1
 
         // stamps current time
         lastMoveTime = timestamp
@@ -177,5 +246,3 @@ requestAnimationFrame((timestamp) => {
     lastMoveTime = timestamp;
     gameLoop(timestamp);
 });
-
-
