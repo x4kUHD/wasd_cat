@@ -9,13 +9,13 @@ playerSprite.src = "sprites/tempPlayer.png"
 // config, states, global vars
 const CONFIG = {
     TILE_SIZE: 16,
-    MAP_WIDTH: 32,
-    MAP_HEIGHT: 32,
+    MAP_WIDTH: 64,
+    MAP_HEIGHT: 64,
     MOVE_SPEED: 4,
     SCALE: 4
 }
 
-// USER STATE
+// USER STATE (x, y)
 const userState = {
     x: 0,
     y: 0
@@ -36,7 +36,7 @@ let resizeTimer = 0
 let lastMoveTime = 0;
 
 // MAP 
-// dictionary
+// tile id dictionary
 const TILE_TYPE = {
     "GRASS": 0,
     "WATER": 1,
@@ -50,6 +50,19 @@ const waterSprite = new Image()
 grassSprite.src = "sprites/grass.png"
 waterSprite.src = "sprites/water.png"
 
+const bushSprite = new Image()
+const trunkSprite = new Image()
+const leavesSprite = new Image()
+bushSprite.src = "sprites/bush.png"
+trunkSprite.src = "sprites/trunk.png"
+leavesSprite.src = "sprites/leaves.png"
+
+// L1: [BASE] grass, water 
+// L2: [OBSTACLES / STRUCTURES] trunk, rocks, walls
+// L3: USER LAYER
+// L4: [OVERLAYS] bush, leaves
+// L5: [AIR/ATMOSPHERE] birds, butterflies etc flying around
+
 // layer 1 array 
 const mapL1 = Array.from({ length: CONFIG.MAP_HEIGHT }, (_, y) =>
     Array.from({ length: CONFIG.MAP_WIDTH }, (_, x) => {
@@ -62,13 +75,24 @@ const mapL1 = Array.from({ length: CONFIG.MAP_HEIGHT }, (_, y) =>
     })
 );
 
-// CAMERA
+// layer 2 array (Obstacles/Deco)
+// Initialized to null (empty) for manual painting
+const mapL2 = Array.from({ length: CONFIG.MAP_HEIGHT }, () =>
+    Array.from({ length: CONFIG.MAP_WIDTH }, () => null)
+);
+
+// --- MANUAL MAP PAINTING ---
+// mapL2[y][x] = TILE_TYPE.BUSH
+mapL2[10][10] = TILE_TYPE.BUSH
+mapL2[10][20] = TILE_TYPE.BUSH
+mapL2[12][15] = TILE_TYPE.TREE
+mapL2[15][10] = TILE_TYPE.TREE
+
+// camera state (x, y)
 const camera = {
     x: 0,
     y: 0
 };
-
-
 
 // handle window resize
 function resizeHandle() {
@@ -83,6 +107,7 @@ function resizeHandle() {
     // 3. start new countdown (AFTER user stops dragging)
     // note: setTimeout(fn, delay) schedules a function to run once after a specififed number of milliseconds. returns a timeout ID
     resizeTimer = setTimeout(() => {
+        // set width / height
         canvas.width = window.innerWidth
         canvas.height = window.innerHeight
         ctx.scale(CONFIG.SCALE, CONFIG.SCALE)
@@ -111,7 +136,7 @@ function update(dt) {
     if (keys.a) newX -= dist
     if (keys.d) newX += dist
 
-    // bounds
+    // check if new position is within bounds
     if (newX < 0) newX = 0
     if (newX > CONFIG.MAP_WIDTH - 1) newX = CONFIG.MAP_WIDTH - 1
     if (newY < 0) newY = 0
@@ -120,21 +145,25 @@ function update(dt) {
     userState.x = newX
     userState.y = newY
 
+    // userState.x = newX
+    // userState.y = newY
+
     // camera
-    // find center of current frame
+    // find center of current frame/screen
     const centerX = (canvas.width / CONFIG.SCALE) / 2
     const centerY = (canvas.height / CONFIG.SCALE) / 2
 
-    // set camera x/y
+    // set camera x, y (player position - camera offset = screen center)
     camera.x = (userState.x * CONFIG.TILE_SIZE) - centerX + (CONFIG.TILE_SIZE / 2);
     camera.y = (userState.y * CONFIG.TILE_SIZE) - centerY + (CONFIG.TILE_SIZE / 2);
 
-    // A. Stop the camera from going past the Top-Left (0, 0)
+
+    // prevent camera from going off map
+    // stop camera x, y from going below 0
     if (camera.x < 0) camera.x = 0;
     if (camera.y < 0) camera.y = 0;
 
-    // B. Stop the camera from going past the Bottom-Right edge
-    // Math: Total Map Size (in pixels) minus one screen-full of pixels
+    // stop camera x,y from going beyond map width, height
     const mapPixelWidth = CONFIG.MAP_WIDTH * CONFIG.TILE_SIZE;
     const mapPixelHeight = CONFIG.MAP_HEIGHT * CONFIG.TILE_SIZE;
 
@@ -150,13 +179,7 @@ function draw() {
     // clear previous frame's pixels
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-    // draw map 
-    // sprite = null
-    // for each id in mapL1,
-    // if id === 0, sprite = grassSprite
-    // if id === 1, sprite = waterSprite
-    // ctx.drawImage(sprite)
-
+    // L1: map
     for (let i = 0; i < mapL1.length; i++) {
         for (let j = 0; j < mapL1[i].length; j++) {
             let sprite = null
@@ -166,7 +189,6 @@ function draw() {
             if (id === TILE_TYPE.WATER) sprite = waterSprite
 
             if (sprite) {
-                // Inside your map loop, wrap the X and Y in Math.floor:
                 ctx.drawImage(
                     sprite,
                     Math.floor((j * CONFIG.TILE_SIZE) - camera.x),
@@ -178,7 +200,30 @@ function draw() {
         }
     }
 
-    // draw player
+    // L2: obstacles
+    for (let i = 0; i < mapL2.length; i++) {
+        for (let j = 0; j < mapL2[i].length; j++) {
+            let sprite = null
+            let id = mapL2[i][j]
+            if (!id) continue
+            if (id === TILE_TYPE.TREE) sprite = trunkSprite
+
+            if (sprite && sprite.complete) {
+                const offsetW = sprite.width - CONFIG.TILE_SIZE
+                const offsetH = sprite.height - CONFIG.TILE_SIZE
+
+                ctx.drawImage(
+                    sprite,
+                    Math.floor((j * CONFIG.TILE_SIZE) - camera.x),
+                    Math.floor((i * CONFIG.TILE_SIZE) - camera.y - offsetH),
+                    sprite.width,
+                    sprite.height
+                );
+            }
+        }
+    }
+
+    // L3: draw player (subtract camera offset)
     // ctx.drawImage(image, dx, dy, dWidth, dHeight)
     // dx (destination x) - horizontal coord where image starts
     // dy (destination y) - vertical coord where image starts
@@ -189,6 +234,37 @@ function draw() {
         CONFIG.TILE_SIZE,
         CONFIG.TILE_SIZE
     );
+
+    // L4: overlays
+    for (let i = 0; i < mapL2.length; i++) {
+        for (let j = 0; j < mapL2[i].length; j++) {
+            const id = mapL2[i][j];
+
+            if (id === TILE_TYPE.BUSH) {
+                const sprite = bushSprite
+                ctx.drawImage(
+                    sprite,
+                    Math.floor((j * CONFIG.TILE_SIZE) - camera.x),
+                    Math.floor((i * CONFIG.TILE_SIZE) - camera.y),
+                    sprite.width,
+                    sprite.height
+                );
+            }
+
+            if (id === TILE_TYPE.TREE) {
+                if (leavesSprite.complete) {
+                    ctx.drawImage(
+                        leavesSprite,
+                        Math.floor((j * CONFIG.TILE_SIZE) - camera.x),
+                        Math.floor((i * CONFIG.TILE_SIZE) - camera.y - leavesSprite.height),
+                        leavesSprite.width,
+                        leavesSprite.height
+                    )
+                }
+            }
+        }
+    }
+
 
 }
 
@@ -230,6 +306,8 @@ function gameLoop(timestamp) {
 
         // stamps current time
         lastMoveTime = timestamp
+
+        // update position and draw
         update(dt)
         draw()
     }
