@@ -1,10 +1,11 @@
 const canvas = document.getElementById("gameCanvas")
 const ctx = canvas.getContext("2d")
 
+// image loader
+const loadImg = (path) => Object.assign(new Image(), { src: path })
 
 // player sprite
-const playerSprite = new Image();
-playerSprite.src = "sprites/tempPlayer.png"
+const playerSprite = loadImg("sprites/tempPlayer.png")
 
 // config, states, global vars
 const CONFIG = {
@@ -12,13 +13,13 @@ const CONFIG = {
     MAP_WIDTH: 64,
     MAP_HEIGHT: 64,
     MOVE_SPEED: 4,
-    SCALE: 4
+    SCALE: 6
 }
 
 // USER STATE (x, y)
 const userState = {
-    x: 0,
-    y: 0
+    x: 5,
+    y: 5
 }
 
 // KEY STATES
@@ -42,20 +43,48 @@ const TILE_TYPE = {
     "WATER": 1,
     "BUSH": 2,
     "TREE": 3,
-    "WALL": 4
+    "WALL": 4,
+    "GRASS2": 10,
+    "GRASS3": 11,
+    "GRASS4": 12,
+    "GRASS5": 13,
+    "COLLIDER": 99
 }
 
-const grassSprite = new Image()
-const waterSprite = new Image()
-grassSprite.src = "sprites/grass.png"
-waterSprite.src = "sprites/water.png"
+const grassSprite = loadImg("sprites/grass.png")
+const waterSprite = loadImg("sprites/water.png")
+
+// grass variation test
+const grass2Sprite = loadImg("sprites/grass2.png")
+const grass3Sprite = loadImg("sprites/grass3.png")
+const grass4Sprite = loadImg("sprites/grass4.png")
+const grass5Sprite = loadImg("sprites/grass5.png")
+
+const grassVariants = {
+    [TILE_TYPE.GRASS]: 65,
+    [TILE_TYPE.GRASS2]: 10,
+    [TILE_TYPE.GRASS3]: 10,
+    [TILE_TYPE.GRASS4]: 10,
+    [TILE_TYPE.GRASS5]: 5
+}
+
+function pickGrassTile() {
+    const roll = Math.random() * 100;
+    let cumulative = 0;
+    for (const [id, chance] of Object.entries(grassVariants)) {
+        cumulative += chance;
+        if (roll < cumulative) return parseInt(id);
+    }
+    return TILE_TYPE.GRASS;
+}
+
 
 const bushSprite = new Image()
 const trunkSprite = new Image()
 const leavesSprite = new Image()
 bushSprite.src = "sprites/bush.png"
 trunkSprite.src = "sprites/trunk.png"
-leavesSprite.src = "sprites/leaves.png"
+// leavesSprite.src = "sprites/leaves.png"
 
 // L1: [BASE] grass, water 
 // L2: [OBSTACLES / STRUCTURES] trunk, rocks, walls
@@ -70,8 +99,8 @@ const mapL1 = Array.from({ length: CONFIG.MAP_HEIGHT }, (_, y) =>
         if (x < 3 || x >= CONFIG.MAP_WIDTH - 3 || y < 3 || y >= CONFIG.MAP_HEIGHT - 3) {
             return TILE_TYPE.WATER;
         }
-        // Otherwise, return GRASS
-        return TILE_TYPE.GRASS;
+        // Otherwise, return a random GRASS variant
+        return pickGrassTile();
     })
 );
 
@@ -80,6 +109,7 @@ const mapL1 = Array.from({ length: CONFIG.MAP_HEIGHT }, (_, y) =>
 const mapL2 = Array.from({ length: CONFIG.MAP_HEIGHT }, () =>
     Array.from({ length: CONFIG.MAP_WIDTH }, () => null)
 );
+
 
 // --- MANUAL MAP PAINTING ---
 // mapL2[y][x] = TILE_TYPE.BUSH
@@ -123,6 +153,25 @@ function resizeHandle() {
 }
 window.addEventListener("resize", resizeHandle)
 
+
+// check if tile is good to move to
+function goodTile(x, y) {
+    x = Math.floor(x)
+    y = Math.floor(y)
+
+    // bounds
+    if (x < 0 || x >= CONFIG.MAP_WIDTH || y < 0 || y >= CONFIG.MAP_HEIGHT) {
+        return false
+    }
+    // obstacles
+    // if mapL2[y][x] is an obstacle, return false
+    if (mapL2[y][x] === 3) {
+        return false
+    }
+
+    return true
+}
+
 function update(dt) {
     // update player position here since it runs at a steady 60fps
     const dist = CONFIG.MOVE_SPEED * dt
@@ -136,17 +185,27 @@ function update(dt) {
     if (keys.a) newX -= dist
     if (keys.d) newX += dist
 
-    // check if new position is within bounds
-    if (newX < 0) newX = 0
-    if (newX > CONFIG.MAP_WIDTH - 1) newX = CONFIG.MAP_WIDTH - 1
-    if (newY < 0) newY = 0
-    if (newY > CONFIG.MAP_HEIGHT - 1) newY = CONFIG.MAP_HEIGHT - 1
+    // COLLISION
+    // We check collision at the feet (y + 0.8)
+    // We check both the left (x + 0.2) and right (x + 0.8) of the feet
+    const feetY = userState.y + 1;
+    const newFeetY = newY + 1;
+    // --- X MOVEMENT ---
+    if (goodTile(newX, feetY) && goodTile(newX + 1, feetY)) {
+        userState.x = newX;
+    }
+    // --- Y MOVEMENT ---
+    if (goodTile(userState.x, newFeetY) && goodTile(userState.x + 1, newFeetY)) {
+        userState.y = newY;
+    }
 
-    userState.x = newX
-    userState.y = newY
+    // if (!isTileSolid(newX, userState.y)) {
+    //     userState.x = newX
+    // }
 
-    // userState.x = newX
-    // userState.y = newY
+    // if (!isTileSolid(userState.x, newY)) {
+    //     userState.y = newY
+    // }
 
     // camera
     // find center of current frame/screen
@@ -186,6 +245,10 @@ function draw() {
             let id = mapL1[i][j]
 
             if (id === TILE_TYPE.GRASS) sprite = grassSprite
+            if (id === TILE_TYPE.GRASS2) sprite = grass2Sprite
+            if (id === TILE_TYPE.GRASS3) sprite = grass3Sprite
+            if (id === TILE_TYPE.GRASS4) sprite = grass4Sprite
+            if (id === TILE_TYPE.GRASS5) sprite = grass5Sprite
             if (id === TILE_TYPE.WATER) sprite = waterSprite
 
             if (sprite) {
