@@ -7,19 +7,28 @@ const loadImg = (path) => Object.assign(new Image(), { src: path })
 // player sprite
 const playerSprite = loadImg("sprites/tempPlayer.png")
 
+// east
+const east1 = loadImg("sprites/east1.png")
+
+// west
+const west1 = loadImg("sprites/east1.png")
+
 // config, states, global vars
 const CONFIG = {
-    TILE_SIZE: 16,
+    TILE_SIZE: 32,
     MAP_WIDTH: 64,
     MAP_HEIGHT: 64,
     MOVE_SPEED: 4,
-    SCALE: 6
+    SCALE: 4
 }
 
 // USER STATE (x, y)
 const userState = {
     x: 5,
-    y: 5
+    y: 5,
+    isMoving: false,
+    isWalkingEast: false,
+    isWalkingWest: false
 }
 
 // KEY STATES
@@ -61,11 +70,11 @@ const grass4Sprite = loadImg("sprites/grass4.png")
 const grass5Sprite = loadImg("sprites/grass5.png")
 
 const grassVariants = {
-    [TILE_TYPE.GRASS]: 65,
-    [TILE_TYPE.GRASS2]: 10,
-    [TILE_TYPE.GRASS3]: 10,
-    [TILE_TYPE.GRASS4]: 10,
-    [TILE_TYPE.GRASS5]: 5
+    [TILE_TYPE.GRASS]: 90,
+    [TILE_TYPE.GRASS2]: 2.5,
+    [TILE_TYPE.GRASS3]: 2.5,
+    [TILE_TYPE.GRASS4]: 2.5,
+    [TILE_TYPE.GRASS5]: 0.5,
 }
 
 function pickGrassTile() {
@@ -180,6 +189,11 @@ function update(dt) {
     let newX = userState.x
     let newY = userState.y
 
+    // movement state
+    userState.isMoving = (keys.w || keys.a || keys.s || keys.d)
+    userState.isWalkingEast = keys.d
+    userState.isWalkingWest = keys.a
+
     if (keys.w) newY -= dist
     if (keys.s) newY += dist
     if (keys.a) newX -= dist
@@ -290,8 +304,20 @@ function draw() {
     // ctx.drawImage(image, dx, dy, dWidth, dHeight)
     // dx (destination x) - horizontal coord where image starts
     // dy (destination y) - vertical coord where image starts
+
+    // determine sprite
+    let spriteToDraw = playerSprite
+
+    if (userState.isMoving) {
+        if (userState.isWalkingEast) {
+            spriteToDraw = east1
+        } if (userState.isWalkingWest) {
+            spriteToDraw = west1
+        }
+    }
+
     ctx.drawImage(
-        playerSprite,
+        spriteToDraw,
         (userState.x * CONFIG.TILE_SIZE) - camera.x,
         (userState.y * CONFIG.TILE_SIZE) - camera.y,
         CONFIG.TILE_SIZE,
