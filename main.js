@@ -11,7 +11,10 @@ const playerSprite = loadImg("sprites/tempPlayer.png")
 const east1 = loadImg("sprites/east1.png")
 
 // west
-const west1 = loadImg("sprites/east1.png")
+const west1 = loadImg("sprites/west1.png")
+const west2 = loadImg("sprites/west2.png")
+const west3 = loadImg("sprites/west3.png")
+const west4 = loadImg("sprites/west4.png")
 
 // config, states, global vars
 const CONFIG = {
@@ -28,7 +31,25 @@ const userState = {
     y: 5,
     isMoving: false,
     isWalkingEast: false,
-    isWalkingWest: false
+    isWalkingWest: false,
+    facing: 'S',
+    // animation
+    animFrame: 0,
+    animTimer: 0
+}
+
+// movement
+const PLAYER_SPRITES = {
+    'W': [west1, west2, west3, west4], // 4-frame animation
+    'E': [east1, east1, east1, east1], // placeholder
+
+    // TOOD: N, S, NE, NW, SW, SE
+    'N': [west1, west2, west3, west4],
+    'S': [west1, west2, west3, west4],
+    'NE': [west1, west2, west3, west4],
+    'NW': [west1, west2, west3, west4],
+    'SW': [west1, west2, west3, west4],
+    'SE': [west1, west2, west3, west4]
 }
 
 // KEY STATES
@@ -213,15 +234,30 @@ function update(dt) {
         userState.y = newY;
     }
 
-    // if (!isTileSolid(newX, userState.y)) {
-    //     userState.x = newX
-    // }
+    // MOVEMENT
+    // movement state for animation
+    userState.isMoving = (keys.w || keys.a || keys.s || keys.d)
 
-    // if (!isTileSolid(userState.x, newY)) {
-    //     userState.y = newY
-    // }
+    // get direction
+    let dirY = keys.w ? "N" : (keys.s ? "S" : "")
+    let dirX = keys.a ? "W" : (keys.d ? "E" : "")
 
-    // camera
+    if (dirY || dirX) userState.facing = dirY + dirX
+
+    // animation timer logic
+    if (userState.isMoving) {
+        userState.animTimer += dt
+        // swap frame every 0.15 sec
+        if (userState.animTimer > 0.15) {
+            userState.animTimer = 0
+            userState.animFrame = (userState.animFrame + 1) % 4
+        }
+    } else { // reset if idle
+        userState.animFrame = 0
+        userState.animTimer = 0
+    }
+
+    // CAMERA
     // find center of current frame/screen
     const centerX = (canvas.width / CONFIG.SCALE) / 2
     const centerY = (canvas.height / CONFIG.SCALE) / 2
@@ -306,15 +342,17 @@ function draw() {
     // dy (destination y) - vertical coord where image starts
 
     // determine sprite
-    let spriteToDraw = playerSprite
+    const animation = PLAYER_SPRITES[userState.facing] || PLAYER_SPRITES['S']
 
-    if (userState.isMoving) {
-        if (userState.isWalkingEast) {
-            spriteToDraw = east1
-        } if (userState.isWalkingWest) {
-            spriteToDraw = west1
-        }
-    }
+    let spriteToDraw = userState.isMoving ? animation[userState.animFrame] : playerSprite
+
+    // if (userState.isMoving) {
+    //     if (userState.isWalkingEast) {
+    //         spriteToDraw = east1
+    //     } if (userState.isWalkingWest) {
+    //         spriteToDraw = west1
+    //     }
+    // }
 
     ctx.drawImage(
         spriteToDraw,
