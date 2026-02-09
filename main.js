@@ -9,6 +9,8 @@ const playerSprite = loadImg("sprites/tempPlayer.png")
 
 // east
 const east1 = loadImg("sprites/east1.png")
+const east2 = loadImg("sprites/east2.png")
+const east3 = loadImg("sprites/east3.png")
 
 // west
 const west1 = loadImg("sprites/west1.png")
@@ -16,12 +18,12 @@ const west2 = loadImg("sprites/west2.png")
 const west3 = loadImg("sprites/west3.png")
 const west4 = loadImg("sprites/west4.png")
 
-// config, states, global vars
+// config
 const CONFIG = {
     TILE_SIZE: 32,
     MAP_WIDTH: 64,
     MAP_HEIGHT: 64,
-    MOVE_SPEED: 4,
+    MOVE_SPEED: 3,
     SCALE: 4
 }
 
@@ -41,7 +43,7 @@ const userState = {
 // movement
 const PLAYER_SPRITES = {
     'W': [west1, west2, west3, west4], // 4-frame animation
-    'E': [east1, east1, east1, east1], // placeholder
+    'E': [east1, east3, east1, east3], // placeholder
 
     // TOOD: N, S, NE, NW, SW, SE
     'N': [west1, west2, west3, west4],
@@ -343,16 +345,7 @@ function draw() {
 
     // determine sprite
     const animation = PLAYER_SPRITES[userState.facing] || PLAYER_SPRITES['S']
-
     let spriteToDraw = userState.isMoving ? animation[userState.animFrame] : playerSprite
-
-    // if (userState.isMoving) {
-    //     if (userState.isWalkingEast) {
-    //         spriteToDraw = east1
-    //     } if (userState.isWalkingWest) {
-    //         spriteToDraw = west1
-    //     }
-    // }
 
     ctx.drawImage(
         spriteToDraw,
