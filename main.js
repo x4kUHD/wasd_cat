@@ -16,7 +16,17 @@ const east3 = loadImg("sprites/east3.png")
 const west1 = loadImg("sprites/west1.png")
 const west2 = loadImg("sprites/west2.png")
 const west3 = loadImg("sprites/west3.png")
-const west4 = loadImg("sprites/west4.png")
+
+// south
+const south1 = loadImg("sprites/south1.png")
+const south2 = loadImg("sprites/south2.png")
+const south3 = loadImg("sprites/south3.png")
+
+
+const temp1 = loadImg("sprites/temp1.png")
+const temp2 = loadImg("sprites/temp2.png")
+const temp3 = loadImg("sprites/temp3.png")
+const temp4 = loadImg("sprites/temp4.png")
 
 // config
 const CONFIG = {
@@ -42,16 +52,15 @@ const userState = {
 
 // movement
 const PLAYER_SPRITES = {
-    'W': [west1, west2, west3, west4], // 4-frame animation
-    'E': [east1, east3, east1, east3], // placeholder
-
+    'W': [west1, west3, west2, west3], // 4-frame animation
+    'E': [east1, east3, east2, east3], // placeholder
+    'S': [south1, south2, south3, south2],
     // TOOD: N, S, NE, NW, SW, SE
-    'N': [west1, west2, west3, west4],
-    'S': [west1, west2, west3, west4],
-    'NE': [west1, west2, west3, west4],
-    'NW': [west1, west2, west3, west4],
-    'SW': [west1, west2, west3, west4],
-    'SE': [west1, west2, west3, west4]
+    'N': [temp1, temp2, temp3, temp4],
+    'NE': [temp1, temp2, temp3, temp4],
+    'NW': [temp1, temp2, temp3, temp4],
+    'SW': [temp1, temp2, temp3, temp4],
+    'SE': [temp1, temp2, temp3, temp4],
 }
 
 // KEY STATES
