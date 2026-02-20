@@ -22,6 +22,10 @@ const south1 = loadImg("sprites/south1.png")
 const south2 = loadImg("sprites/south2.png")
 const south3 = loadImg("sprites/south3.png")
 
+// north
+const north1 = loadImg("sprites/north1.png")
+const north2 = loadImg("sprites/north2.png")
+const north3 = loadImg("sprites/north3.png")
 
 const temp1 = loadImg("sprites/temp1.png")
 const temp2 = loadImg("sprites/temp2.png")
@@ -39,8 +43,8 @@ const CONFIG = {
 
 // USER STATE (x, y)
 const userState = {
-    x: 5,
-    y: 5,
+    x: 20,
+    y: 20,
     isMoving: false,
     isWalkingEast: false,
     isWalkingWest: false,
@@ -53,14 +57,13 @@ const userState = {
 // movement
 const PLAYER_SPRITES = {
     'W': [west1, west3, west2, west3], // 4-frame animation
-    'E': [east1, east3, east2, east3], // placeholder
+    'E': [east1, east3, east2, east3],
     'S': [south1, south2, south3, south2],
-    // TOOD: N, S, NE, NW, SW, SE
-    'N': [temp1, temp2, temp3, temp4],
-    'NE': [temp1, temp2, temp3, temp4],
-    'NW': [temp1, temp2, temp3, temp4],
-    'SW': [temp1, temp2, temp3, temp4],
-    'SE': [temp1, temp2, temp3, temp4],
+    'N': [north1, north2, north3, north2],
+    'NE': [north1, north2, north3, north2],
+    'NW': [north1, north2, north3, north2],
+    'SW': [south1, south2, south3, south2],
+    'SE': [south1, south2, south3, south2],
 }
 
 // KEY STATES
@@ -154,10 +157,10 @@ const mapL2 = Array.from({ length: CONFIG.MAP_HEIGHT }, () =>
 
 // --- MANUAL MAP PAINTING ---
 // mapL2[y][x] = TILE_TYPE.BUSH
-mapL2[10][10] = TILE_TYPE.BUSH
-mapL2[10][20] = TILE_TYPE.BUSH
-mapL2[12][15] = TILE_TYPE.TREE
-mapL2[15][10] = TILE_TYPE.TREE
+// mapL2[10][10] = TILE_TYPE.BUSH
+// mapL2[10][20] = TILE_TYPE.BUSH
+// mapL2[12][15] = TILE_TYPE.TREE
+// mapL2[15][10] = TILE_TYPE.TREE
 
 // camera state (x, y)
 const camera = {
